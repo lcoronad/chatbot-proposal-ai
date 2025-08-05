@@ -1,0 +1,3 @@
+# This file lists the dependencies for the project.
+gradio[mcp]
+llama_stack_client
