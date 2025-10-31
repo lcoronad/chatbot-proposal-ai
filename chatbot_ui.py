@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from dotenv import load_dotenv
-from llama_stack_client import LlamaStackClient
+from llama_stack_client import LlamaStackClient, Agent
 from constants import LOG_LEVELS
 
 # Class to create an agentic system for interacting with Llama Stack Agents
@@ -72,37 +72,34 @@ class AgenticProposalRH:
     def create_agent(self):
         """Create an agent with the specified model and tools."""
 
-        # Create the agent
-        agentic_system_create_response = self.client.agents.create(
-            agent_config={
-                "name": "Orquestrator Agent",
-                "description": "Agent for help with with Red Hat proposals",
-                "model": self.model_id,
-                "instructions": (
-                    "You are a helpful assistant."
-                    "You can use the tools available to answer user questions."
-                ),
-                "toolgroups": [
-                    "ocp::proposal",
-                    {
-                        "name": "builtin::rag/knowledge_search",
-                        "args": {"vector_db_ids": ["ocp_rh_vector_db"]},
-                    }
-                ],
-                "tool_choice": "auto",
-                "input_shields": [],
-                "output_shields": [],
-                "max_infer_iters": self.max_infer_iters,
-                "sampling_params": self.sampling_params
-            }
+        vector_db_id = os.getenv("VECTOR_DB_ID_OCP", "ocp_rh_vector_db")
+
+        self.logger.info(f"Vector DB ID for OCP: {vector_db_id}")
+
+        # Create the agent using the Agent class
+        self.agent = Agent(
+            client=self.client,
+            model=self.model_id,
+            instructions=(
+                "You are a helpful assistant."
+                "You can use the tools available to answer user questions."
+            ),
+            tools=[
+                "ocp::proposal",
+                {
+                    "name": "builtin::rag/knowledge_search",
+                    "args": {"vector_db_ids": [vector_db_id]},
+                }
+            ],
+            input_shields=[],
+            output_shields=[],
+            max_infer_iters=self.max_infer_iters,
+            sampling_params=self.sampling_params,
         )
-        self.agent_id = agentic_system_create_response.agent_id
+        self.agent_id = self.agent.agent_id
 
         # Create a session that will be used to ask the agent a sequence of questions
-        session_create_response = self.client.agents.session.create(
-            self.agent_id, session_name="agent1"
-        )
-        self.session_id = session_create_response.session_id
+        self.session_id = self.agent.create_session(session_name="agent1")
         self.history_formatted = []
         self.logger.info(f"Agent created with ID: {self.agent_id} and session ID: {self.session_id}")
 
@@ -115,17 +112,17 @@ class AgenticProposalRH:
         self.history_formatted.append(question)
 
         # Create a response stream from the agent
-        response_stream = self.client.agents.turn.create(
-            session_id=self.session_id,
-            agent_id=self.agent_id,
-            stream=self.stream,
-            messages=[
-                {
-                    "role": "user", 
-                    "content": question
-                }
-            ],
-        )
+        if self.stream:
+            response_stream = self.agent.create_turn(
+                session_id=self.session_id,
+                messages=[
+                    {
+                        "role": "user", 
+                        "content": question
+                    }
+                ],
+                stream=True,
+            )
 
         # Process the response stream and yield partial responses
         partial_response = ""
