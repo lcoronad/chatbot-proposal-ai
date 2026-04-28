@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from dotenv import load_dotenv
-from llama_stack_client import LlamaStackClient, Agent
+from llama_stack_client import LlamaStackClient, Agent, AgentEventLogger
 from constants import LOG_LEVELS
 
 # Class to create an agentic system for interacting with Llama Stack Agents
@@ -76,12 +76,6 @@ class AgenticProposalRH:
 
         self.logger.info(f"Vector DB ID for OCP: {vector_db_id}")
 
-        models = self.client.models.list()
-        for model in models:
-            self.logger.info(f"Model: {model}")
-
-        self.logger.info(f"Model Id: {self.model_id}")
-
         # Tool group id registered on Llama Stack (e.g. llama-stack-client toolgroups register ... ocp::proposal).
         # Agent.normalize_tools() only accepts dicts / ClientTool / callables, not raw strings.
         proposal_toolgroup_id = os.getenv("OCP_TOOLGROUP_ID", "ocp::proposal")
@@ -93,6 +87,8 @@ class AgenticProposalRH:
             instructions=(
                 "You are a helpful assistant."
                 "You can use the tools available to answer user questions."
+                "IMPORTANT: You can only use one tool at a time. "
+                "Do not attempt to call multiple tools in a single response"
             ),
             tools=[
                 {
@@ -102,7 +98,6 @@ class AgenticProposalRH:
                     "server_label": proposal_toolgroup_id,
                 },
                 {
-                    "name": "builtin::rag",
                     "type": "file_search",
                     "vector_store_ids": [vector_db_id],
                 }
@@ -133,21 +128,11 @@ class AgenticProposalRH:
                 ],
                 stream=True,
             )
-
-        # Process the response stream and yield partial responses
+        
         partial_response = ""
-        for response in response_stream:
-            if hasattr(response, "error") and getattr(response, "error", None):
-
-                error_msg = getattr(response, "error", {}).get( "message", "Unknown error" )
-                self.logger.debug(f"Error: {error_msg}")
-                break
-            elif ( hasattr(response, "event") and getattr(response, "event", None)
-                and hasattr(response.event, "payload") and response.event.payload.event_type == "turn_complete" ):
-
-                partial_response += response.event.payload.turn.output_message.content
-                self.logger.debug(f"{self.session_id} | Response complete")
-                yield partial_response
+        for response in AgentEventLogger().log(response_stream):
+            partial_response += response
+            yield partial_response
 
 if __name__ == "__main__":
     # Create an instance of the agentic system
