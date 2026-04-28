@@ -72,12 +72,20 @@ class AgenticProposalRH:
     def create_agent(self):
         """Create an agent with the specified model and tools."""
 
-        vector_db_id = os.getenv("VECTOR_DB_ID_OCP", "ocp_rh_vector_db")
+        vector_db_name = os.getenv("VECTOR_DB_NAME_OCP", "ocp_rh_vector_db")
+        vector_db_id = ""
+
+        vector_dbs = self.client.vector_stores.list()
+        for vector_db in vector_dbs:
+            if vector_db.name == vector_db_name:
+                vector_db_id = vector_db.id
+                break
+
+        if vector_db_id == "":
+            self.logger.error(f"Vector DB ID for OCP: {vector_db_name} not found in the vector stores")
 
         self.logger.info(f"Vector DB ID for OCP: {vector_db_id}")
 
-        # Tool group id registered on Llama Stack (e.g. llama-stack-client toolgroups register ... ocp::proposal).
-        # Agent.normalize_tools() only accepts dicts / ClientTool / callables, not raw strings.
         proposal_toolgroup_id = os.getenv("OCP_TOOLGROUP_ID", "ocp::proposal")
 
         # Create the agent using the Agent class
