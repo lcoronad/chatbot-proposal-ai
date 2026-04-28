@@ -58,7 +58,7 @@ class AgenticProposalRH:
             "max_tokens": max_tokens,
         }
 
-        stream_env = os.getenv("STREAM", "True")
+        stream_env = os.getenv("STREAM", "False")
         
         # the Boolean 'stream' parameter will later be passed to Llama Stack Agents/Inference APIs
         # any value non equal to 'False' will be considered as 'True'
@@ -76,6 +76,16 @@ class AgenticProposalRH:
 
         self.logger.info(f"Vector DB ID for OCP: {vector_db_id}")
 
+        models = self.client.models.list()
+        for model in models:
+            self.logger.info(f"Model: {model}")
+
+        self.logger.info(f"Model Id: {self.model_id}")
+
+        # Tool group id registered on Llama Stack (e.g. llama-stack-client toolgroups register ... ocp::proposal).
+        # Agent.normalize_tools() only accepts dicts / ClientTool / callables, not raw strings.
+        proposal_toolgroup_id = os.getenv("OCP_TOOLGROUP_ID", "ocp::proposal")
+
         # Create the agent using the Agent class
         self.agent = Agent(
             client=self.client,
@@ -85,23 +95,23 @@ class AgenticProposalRH:
                 "You can use the tools available to answer user questions."
             ),
             tools=[
-                "ocp::proposal",
                 {
-                    "name": "builtin::rag/knowledge_search",
-                    "args": {"vector_db_ids": [vector_db_id]},
+                    "name": proposal_toolgroup_id, 
+                    "type": "mcp",
+                    "server_url": os.getenv("MCP_SERVER_OCP_URL", "http://localhost:7860/gradio_api/mcp/sse"),
+                    "server_label": proposal_toolgroup_id,
+                },
+                {
+                    "name": "builtin::rag",
+                    "type": "file_search",
+                    "vector_store_ids": [vector_db_id],
                 }
             ],
-            input_shields=[],
-            output_shields=[],
-            max_infer_iters=self.max_infer_iters,
-            sampling_params=self.sampling_params,
         )
-        self.agent_id = self.agent.agent_id
-
         # Create a session that will be used to ask the agent a sequence of questions
         self.session_id = self.agent.create_session(session_name="agent1")
         self.history_formatted = []
-        self.logger.info(f"Agent created with ID: {self.agent_id} and session ID: {self.session_id}")
+        self.logger.info(f"Agent ready. Session (conversation) ID: {self.session_id}")
 
     # Function to make questions to the agent and yield responses
     def make_questions(self, question: str, history: list):
