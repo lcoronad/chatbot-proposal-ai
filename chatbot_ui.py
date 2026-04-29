@@ -87,22 +87,18 @@ class AgenticProposalRH:
         self.logger.info(f"Vector DB ID for OCP: {vector_db_id}")
 
         proposal_toolgroup_id = os.getenv("OCP_TOOLGROUP_ID", "ocp::proposal")
+        agent_instructions = os.getenv("AGENT_INSTRUCTIONS", "You are a helpful assistant.")
+        mcp_server_url = os.getenv("MCP_SERVER_OCP_URL", "http://localhost:7860/gradio_api/mcp/sse")
 
         # Create the agent using the Agent class
         self.agent = Agent(
             client=self.client,
             model=self.model_id,
-            instructions=(
-                "You are a helpful assistant."
-                "You can use the tools available to answer user questions."
-                "IMPORTANT: You can only use one tool at a time. "
-                "Do not attempt to call multiple tools in a single response"
-            ),
+            instructions=agent_instructions,
             tools=[
                 {
-                    "name": proposal_toolgroup_id, 
                     "type": "mcp",
-                    "server_url": os.getenv("MCP_SERVER_OCP_URL", "http://localhost:7860/gradio_api/mcp/sse"),
+                    "server_url": mcp_server_url,
                     "server_label": proposal_toolgroup_id,
                 },
                 {
