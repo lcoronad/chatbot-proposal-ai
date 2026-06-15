@@ -162,7 +162,7 @@ if __name__ == "__main__":
             ["What SKUs for Red Hat Openshift Container Platform you know?"],
             ["What infrastructure are available for Red Hat Openshift Container Platform?"],
             ["Can you detail me if AWS is a valid infrastructure for Red Hat Openshift Container Platform and what SKUs can you provide?"],
-            ["I am a Red Hat OpenShift expert. I need to put together a proposal to determine how many servers in an OpenShift cluster I need to install to handle 10,000 transactions per second. What SKU should I use? Please provide it in the easiest way to understand, preferably with comparative tables"],
+            ["I am a Red Hat OpenShift solution architect and I need to create a proposal to determine what infraestructure I need in an OpenShift cluster if I want to handle 10,000 transactions per second. What SKU should I use? Please provide it in the easiest way to understand, preferably with comparative tables"],
         ],
         theme=gradio.themes.Soft(primary_hue=gradio.themes.colors.red, secondary_hue=gradio.themes.colors.gray),
         flagging_mode="manual",

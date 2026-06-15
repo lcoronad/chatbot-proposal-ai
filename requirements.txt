@@ -1,3 +1,11 @@
 # This file lists the dependencies for the project.
-gradio[mcp]==5.49.1
+#gradio[mcp]==5.49.1
+#chainlit>=1.1.0
 llama_stack_client==0.4.2
+chainlit>=1.1.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.0
+langgraph>=0.1.0
+langchain-milvus>=0.1.0
+pymilvus>=2.4.0
+python-dotenv>=1.0.0

@@ -2,6 +2,12 @@
 
 Chatbot para la aplicación de propuestas de Red Hat, para su correcta ejecución se debe tener un llama-stack-server corriendo.
 
+Me puedes detallar la infraestructura requerida para instalar Red hat openshift?
+
+Me puedes detallar la información de los SKUs de los productos de red hat?
+
+Soy un arquitecto de soluciones y necesito crear una propuesta para determinar la infraestructura de servidores que se requieren para openshift si tengo que desplegar aplicaciones que manejen 10.000 transacciones por segundo, el sizing y que skus debo entregar a mi cliente, por favor se lo más detallado de la forma mas facil de entender y preferible con tablas comparativas
+
 ## Setup local
 
 Inicializar el ambiente de Python
@@ -32,7 +38,7 @@ python chatbot_ui.py
 ```bash
 export USER=lcoronad
 export ORGANIZATION_QUAY=lcoronad
-export VERSION=1.1.1
+export VERSION=1.1.26
 ```
 
 ### Build imagen
