@@ -184,7 +184,7 @@ def herramienta_rag_skus(query: str) -> str:
             data=[query_vector],
             limit=3,
             search_params={"metric_type": "COSINE", "params": {}},
-            output_fields=["page_content"],
+            output_fields=["text"],
         )
 
         if not results or len(results[0]) == 0:
@@ -192,7 +192,7 @@ def herramienta_rag_skus(query: str) -> str:
 
         chunks = []
         for hit in results[0]:
-            texto = hit["entity"].get("page_content", "")
+            texto = hit["entity"].get("text", "")
             chunks.append(f"[Doc SKU]: {texto}")
 
         contexto = "\n\n".join(chunks)
